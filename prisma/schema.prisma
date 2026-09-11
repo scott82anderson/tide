@@ -1,0 +1,278 @@
+// DockMaster Service Writer prototype schema.
+//
+// Local dev runs on SQLite. The schema avoids SQLite-only and Postgres-only
+// features (no enums, no native arrays, no Json columns) so that switching the
+// datasource provider to "postgresql" is the only change needed for deployment.
+// Array-like fields are stored as JSON-encoded strings and decoded in the
+// DockMasterClient mock implementation.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Marina {
+  id              String @id @default(cuid())
+  name            String
+  city            String
+  state           String
+  laborRate       Float
+  shopSuppliesPct Float
+  taxPct          Float
+}
+
+model Technician {
+  id             String          @id @default(cuid())
+  name           String
+  role           String // technician | lead_tech | service_manager
+  skills         String // JSON string[]
+  hourlyCost     Float
+  availability   String // JSON { weekday: [[startHour, endHour]] }
+  techNotes      TechNote[]
+  workOrders     WorkOrder[]
+  scheduleBlocks ScheduleBlock[]
+  estimates      Estimate[]
+}
+
+model Customer {
+  id            String     @id @default(cuid())
+  name          String
+  email         String
+  phone         String
+  portalEnabled Boolean    @default(true)
+  arBalance     Float      @default(0)
+  vessels       Vessel[]
+  invoices      Invoice[]
+  estimates     Estimate[]
+}
+
+model Vessel {
+  id          String      @id @default(cuid())
+  name        String
+  make        String
+  model       String
+  year        Int
+  lengthFt    Float
+  hin         String      @unique
+  engineMake  String
+  engineModel String
+  engineCount Int         @default(1)
+  engineHours Int
+  location    String // e.g. "Slip C-12" or "Rack B-07"
+  customerId  String
+  customer    Customer    @relation(fields: [customerId], references: [id])
+  workOrders  WorkOrder[]
+  estimates   Estimate[]
+  techNotes   TechNote[]
+}
+
+model OperationCode {
+  id                        String               @id @default(cuid())
+  code                      String               @unique
+  description               String
+  category                  String
+  standardHours             Float
+  laborRate                 Float? // overrides Marina.laborRate when set
+  keywords                  String // JSON string[]
+  maintenanceIntervalMonths Int?
+  kitId                     String?              @unique
+  kit                       PartsKit?            @relation(fields: [kitId], references: [id])
+  estimateLines             EstimateLine[]
+  workOrderOperations       WorkOrderOperation[]
+}
+
+model PartsKit {
+  id            String         @id @default(cuid())
+  name          String
+  items         KitItem[]
+  operationCode OperationCode?
+}
+
+model KitItem {
+  id     String   @id @default(cuid())
+  kitId  String
+  kit    PartsKit @relation(fields: [kitId], references: [id])
+  partId String
+  part   Part     @relation(fields: [partId], references: [id])
+  qty    Float
+}
+
+model Part {
+  id              String          @id @default(cuid())
+  partNumber      String          @unique
+  description     String
+  vendor          String
+  cost            Float
+  sellPrice       Float
+  onHand          Int
+  reorderPoint    Int
+  binLocation     String
+  fitsEngineMakes String // JSON string[]
+  kitItems        KitItem[]
+  estimateLines   EstimateLine[]
+  workOrderParts  WorkOrderPart[]
+}
+
+model WorkOrder {
+  id             String               @id @default(cuid())
+  number         String               @unique // WO-2024-0311
+  vesselId       String
+  vessel         Vessel               @relation(fields: [vesselId], references: [id])
+  technicianId   String?
+  technician     Technician?          @relation(fields: [technicianId], references: [id])
+  status         String // open | scheduled | in_progress | closed
+  description    String
+  openedAt       DateTime
+  closedAt       DateTime?
+  hoursStandard  Float                @default(0)
+  hoursBilled    Float                @default(0)
+  total          Float                @default(0)
+  estimateId     String?              @unique
+  estimate       Estimate?            @relation(fields: [estimateId], references: [id])
+  operations     WorkOrderOperation[]
+  parts          WorkOrderPart[]
+  scheduleBlocks ScheduleBlock[]
+  invoices       Invoice[]
+}
+
+model WorkOrderOperation {
+  id              String        @id @default(cuid())
+  workOrderId     String
+  workOrder       WorkOrder     @relation(fields: [workOrderId], references: [id])
+  operationCodeId String
+  operationCode   OperationCode @relation(fields: [operationCodeId], references: [id])
+  hours           Float
+}
+
+model WorkOrderPart {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  partId      String
+  part        Part      @relation(fields: [partId], references: [id])
+  qty         Float
+}
+
+model Estimate {
+  id                      String         @id @default(cuid())
+  number                  String         @unique // EST-2026-0142
+  status                  String // draft_ai | draft_reviewed | awaiting_customer | approved | declined | converted
+  title                   String
+  vesselId                String
+  vessel                  Vessel         @relation(fields: [vesselId], references: [id])
+  customerId              String
+  customer                Customer       @relation(fields: [customerId], references: [id])
+  technicianId            String?
+  technician              Technician?    @relation(fields: [technicianId], references: [id])
+  techNoteId              String?
+  techNote                TechNote?      @relation(fields: [techNoteId], references: [id])
+  origin                  String         @default("tech_note") // tech_note | outreach | manual
+  quoteSeparately         Boolean        @default(false)
+  parentEstimateId        String?
+  subtotalLabor           Float          @default(0)
+  subtotalParts           Float          @default(0)
+  shopSupplies            Float          @default(0)
+  tax                     Float          @default(0)
+  total                   Float          @default(0)
+  requiresManagerApproval Boolean        @default(false)
+  vesselMatchConfidence   Float?
+  vesselMatchReasons      String         @default("[]") // JSON string[]
+  historyFlags            String         @default("[]") // JSON HistoryFlag[]
+  reasoning               String         @default("{}") // JSON ReasoningTrace
+  customerSummary         String?
+  internalSummary         String?
+  photoPaths              String         @default("[]") // JSON string[]
+  sentAt                  DateTime?
+  approvedAt              DateTime?
+  signedByName            String?
+  signedAt                DateTime?
+  declinedReason          String?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  lines                   EstimateLine[]
+  workOrder               WorkOrder?
+}
+
+model EstimateLine {
+  id                  String         @id @default(cuid())
+  estimateId          String
+  estimate            Estimate       @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  kind                String // operation | part | misc
+  operationCodeId     String?
+  operationCode       OperationCode? @relation(fields: [operationCodeId], references: [id])
+  partId              String?
+  part                Part?          @relation(fields: [partId], references: [id])
+  parentLineId        String? // part lines hang off their operation line
+  description         String
+  customerDescription String?
+  qty                 Float          @default(1)
+  hours               Float?
+  standardHours       Float?
+  technicianHours     Float?
+  hoursFlag           String? // e.g. "Technician estimate differs from standard by more than 50%"
+  rate                Float?
+  unitCost            Float?
+  unitPrice           Float?
+  lineTotal           Float          @default(0)
+  included            Boolean        @default(true)
+  confidence          Float?
+  source              String         @default("ai") // ai | staff
+  rationale           String?
+  sourceNote          String?
+  stockWarning        String?
+  needsManagerReview  Boolean        @default(false)
+  sortOrder           Int            @default(0)
+}
+
+model Invoice {
+  id          String     @id @default(cuid())
+  number      String     @unique // INV-2026-0412
+  customerId  String
+  customer    Customer   @relation(fields: [customerId], references: [id])
+  workOrderId String?
+  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id])
+  amount      Float
+  issuedAt    DateTime
+  dueAt       DateTime
+  paidAt      DateTime?
+  description String
+}
+
+model TechNote {
+  id           String     @id @default(cuid())
+  transcript   String
+  audioPath    String?
+  photoPaths   String     @default("[]") // JSON string[]
+  technicianId String
+  technician   Technician @relation(fields: [technicianId], references: [id])
+  vesselId     String?
+  vessel       Vessel?    @relation(fields: [vesselId], references: [id])
+  createdAt    DateTime   @default(now())
+  estimates    Estimate[]
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  actor      String // ai | staff | customer
+  action     String
+  entityType String
+  entityId   String
+  payload    String   @default("{}") // JSON
+  createdAt  DateTime @default(now())
+}
+
+model ScheduleBlock {
+  id           String     @id @default(cuid())
+  technicianId String
+  technician   Technician @relation(fields: [technicianId], references: [id])
+  workOrderId  String?
+  workOrder    WorkOrder? @relation(fields: [workOrderId], references: [id])
+  label        String
+  start        DateTime
+  end          DateTime
+  source       String     @default("staff") // staff | ai_suggested
+}
