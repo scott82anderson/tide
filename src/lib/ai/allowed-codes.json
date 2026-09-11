@@ -1,0 +1,17 @@
+{
+  "_comment": "Mirrors Blu's per-role scoping. A technician role may only propose codes in its allowed categories; codes listed in deniedCodes always need manager review regardless of category. '*' allows every category.",
+  "roles": {
+    "technician": {
+      "allowedCategories": ["engine", "drive", "electrical", "plumbing", "hydraulics", "winterisation", "commissioning", "detailing"],
+      "deniedCodes": ["DRV-LU-02", "HUL-BTM-01"]
+    },
+    "lead_tech": {
+      "allowedCategories": "*",
+      "deniedCodes": ["DRV-LU-02"]
+    },
+    "service_manager": {
+      "allowedCategories": "*",
+      "deniedCodes": []
+    }
+  }
+}
