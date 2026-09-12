@@ -13,6 +13,13 @@ import { z } from "zod";
 
 export const MODEL = "claude-sonnet-4-6";
 
+/**
+ * Model routing for the GTM agents: the strongest model for drafting and demos,
+ * a cheaper one for enrichment and classification (GTM doc, section 10).
+ */
+export const MODEL_STRONG = MODEL;
+export const MODEL_CHEAP = "claude-haiku-4-5";
+
 export class AiUnavailableError extends Error {
   constructor(message = "ANTHROPIC_API_KEY is not set. Add it to .env to enable drafting.") {
     super(message);
@@ -40,6 +47,8 @@ export interface StructuredRequest<T> {
   user: UserContent;
   schema: z.ZodType<T>;
   maxTokens?: number;
+  /** Override the default model, e.g. MODEL_CHEAP for classification. */
+  model?: string;
 }
 
 export interface StructuredResult<T> {
@@ -100,7 +109,7 @@ export class AnthropicStructuredCaller implements StructuredCaller {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const response = await this.client.messages.create({
-          model: MODEL,
+          model: req.model ?? MODEL,
           max_tokens: req.maxTokens ?? 4096,
           system: req.system,
           tools: [tool],
@@ -169,6 +178,6 @@ export class FakeStructuredCaller implements StructuredCaller {
     }
     const raw = queue.shift();
     const output = req.schema.parse(raw);
-    return { output, latencyMs: 1, model: "fixture" };
+    return { output, latencyMs: 1, model: req.model ? `fixture:${req.model}` : "fixture" };
   }
 }

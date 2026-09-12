@@ -9,11 +9,12 @@ import { parts } from "./seed-data/parts";
 import { buildWorkOrders, controlledVessels } from "./seed-data/work-orders";
 import { buildInvoices } from "./seed-data/invoices";
 import { buildScheduleBlocks } from "./seed-data/schedule";
+import { seedGtm } from "./seed-data/gtm";
 
 const prisma = new PrismaClient();
 
 async function clear() {
-  // Dependency-safe order: children before parents.
+  // Dependency-safe order: children before parents. GTM tables are cleared by seedGtm.
   await prisma.activityLog.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.invoice.deleteMany();
@@ -109,6 +110,9 @@ async function main() {
     ],
   });
 
+  // Go-to-market workspace: accounts, signals, telemetry, and the agent history.
+  await seedGtm(prisma);
+
   // ----------------------------------------------------------- summary
   const counts = {
     marina: await prisma.marina.count(),
@@ -125,6 +129,11 @@ async function main() {
     invoices: await prisma.invoice.count(),
     scheduleBlocks: await prisma.scheduleBlock.count(),
     activityLog: await prisma.activityLog.count(),
+    gtmAccounts: await prisma.account.count(),
+    gtmSignals: await prisma.accountSignal.count(),
+    gtmAgentRuns: await prisma.agentRun.count(),
+    gtmQueueItems: await prisma.queueItem.count(),
+    gtmOutbound: await prisma.outboundMessage.count(),
   };
   console.log(`Seeded in ${Date.now() - started} ms (demo today: ${DEMO_TODAY.toISOString().slice(0, 10)})`);
   console.table(counts);
