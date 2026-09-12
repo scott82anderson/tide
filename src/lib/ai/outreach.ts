@@ -12,7 +12,7 @@ import type { OperationMatchResult } from "./match-operations";
 import { applyNarrative, writeNarrative } from "./narrative";
 import { OutreachSchema, type Outreach } from "./schemas";
 
-const SYSTEM = `You write short, warm, direct service reminders for a marina. The reader is a boat owner who has used this yard before. Mention the boat by name, what is due and why (the interval), and that an estimate is ready to review in their portal. No pressure, no discounts, no exclamation marks. Sign as the yard's service team.`;
+const SYSTEM = `You write short, warm, direct service reminders for a marina. The reader is a boat owner who has used this yard before. Mention the boat by name, what is due and why (the interval), and that an estimate is ready to review in their portal. No pressure, no discounts, no exclamation marks, no em dashes. Sign as the yard's service team.`;
 
 export interface OutreachResult {
   estimate: Estimate;

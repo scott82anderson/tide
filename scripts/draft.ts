@@ -3,7 +3,7 @@
  * Runs steps 2-6 against the seeded database and prints the drafts as JSON.
  * Nothing is persisted.
  */
-import "dotenv/config";
+import "./env";
 import fs from "node:fs";
 import path from "node:path";
 import { getAi } from "../src/lib/ai/anthropic";

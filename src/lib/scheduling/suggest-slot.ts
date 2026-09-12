@@ -53,13 +53,32 @@ export function suggestSlot(
   technicians: Technician[],
   blocks: ScheduleBlock[],
   now: Date = DEMO_TODAY,
+  /** Continuity: the technician who diagnosed the job gets it if they have a slot this week. */
+  preferredTechnicianId: string | null = null,
 ): SlotSuggestion | null {
   const needed = requiredSkills(workOrder);
   const hours = Math.max(1, Math.ceil(workOrder.operations.reduce((s, o) => s + o.hours, 0)));
-  const candidates = technicians.filter(
+  const skilled = technicians.filter(
     (t) => t.role !== "service_manager" && needed.every((s) => t.skills.includes(s)),
   );
-  if (candidates.length === 0) return null;
+  if (skilled.length === 0) return null;
+
+  const preferred = skilled.find((t) => t.id === preferredTechnicianId);
+  if (preferred) {
+    const own = findSlot(workOrder, [preferred], blocks, now, hours, needed);
+    if (own) return { ...own, reason: `${own.reason}; kept with ${preferred.name}, who diagnosed the job` };
+  }
+  return findSlot(workOrder, skilled, blocks, now, hours, needed);
+}
+
+function findSlot(
+  workOrder: WorkOrderSummary,
+  candidates: Technician[],
+  blocks: ScheduleBlock[],
+  now: Date,
+  hours: number,
+  needed: string[],
+): SlotSuggestion | null {
 
   // A job longer than a half day still needs a start slot. Look for a
   // contiguous opening of at least MIN_BLOCK hours (spanning the lunch break),

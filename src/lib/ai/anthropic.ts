@@ -54,6 +54,23 @@ export interface StructuredCaller {
   call<T>(req: StructuredRequest<T>): Promise<StructuredResult<T>>;
 }
 
+/**
+ * House style: no em dashes in anything a customer or staff member reads.
+ * Applied to every string in every model output, so a prompt slip cannot leak one.
+ */
+export function stripEmDashes<T>(value: T): T {
+  if (typeof value === "string") {
+    return value.replace(/\s*[—–]\s*/g, ", ").replace(/,\s*,/g, ",") as T;
+  }
+  if (Array.isArray(value)) return value.map(stripEmDashes) as T;
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = stripEmDashes(v);
+    return out as T;
+  }
+  return value;
+}
+
 function toolInputSchema(schema: z.ZodType): Anthropic.Tool["input_schema"] {
   const json = z.toJSONSchema(schema, { target: "draft-7" }) as Record<string, unknown>;
   delete json.$schema;
@@ -96,7 +113,7 @@ export class AnthropicStructuredCaller implements StructuredCaller {
         );
         if (!block) throw new AiCallError("Model did not call the structured tool.");
 
-        const parsed = req.schema.safeParse(block.input);
+        const parsed = req.schema.safeParse(stripEmDashes(block.input));
         if (!parsed.success) {
           throw new AiCallError(
             `Model output failed validation: ${parsed.error.issues

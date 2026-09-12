@@ -54,7 +54,16 @@ export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
+      // The client may navigate away mid-stream; enqueue then throws. Ignore it.
+      let open = true;
+      const send = (obj: unknown) => {
+        if (!open) return;
+        try {
+          controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
+        } catch {
+          open = false;
+        }
+      };
       const client = getDockMasterClient();
       try {
         // Without a key, the bundled sample still drafts from recorded model
@@ -121,7 +130,13 @@ export async function POST(req: NextRequest) {
         console.error("[draft]", err);
         send({ error: message, retryable: !(err instanceof AiUnavailableError) });
       } finally {
-        controller.close();
+        if (open) {
+          try {
+            controller.close();
+          } catch {
+            // already closed by the client
+          }
+        }
       }
     },
   });

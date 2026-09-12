@@ -49,17 +49,89 @@ export interface DraftEstimate extends EstimateInput {
   historyFlags: HistoryFlag[];
   /** Which matched findings fed this draft, for the reasoning panel. */
   findingIndexes: number[];
+  /** Non-fatal notes produced while building (hours reassignment, etc). */
+  buildNotes: string[];
 }
 
-/** Kits list parts for several engine brands; keep the ones that fit this vessel. */
-export function kitItemsForVessel<T extends { part: { fitsEngineMakes: string[] } }>(
+/**
+ * Kits list parts for several engine brands and models. Keep the ones that fit
+ * this vessel: first by make, then, where a kit carries several variants of the
+ * same part (same description before the comma), prefer the variant whose
+ * description mentions a token of the vessel's engine model ("8.2 MAG" for an
+ * "8.2 MAG ECT"). If no variant mentions the model, all variants are kept and
+ * the manager picks.
+ */
+export function kitItemsForVessel<T extends { part: { description: string; fitsEngineMakes: string[] } }>(
   items: T[],
-  vessel: Pick<Vessel, "engineMake">,
+  vessel: Pick<Vessel, "engineMake" | "engineModel">,
 ): T[] {
   const make = vessel.engineMake.toLowerCase();
-  return items.filter(
+  const byMake = items.filter(
     (i) => i.part.fitsEngineMakes.length === 0 || i.part.fitsEngineMakes.some((m) => m.toLowerCase() === make),
   );
+
+  const modelTokens = vessel.engineModel
+    .toLowerCase()
+    .split(/[\s/]+/)
+    .filter((t) => t.length >= 2);
+  const mentionsModel = (description: string) => {
+    const words = description.toLowerCase().split(/[\s,/()]+/);
+    return modelTokens.some((t) => words.includes(t));
+  };
+  const role = (description: string) => description.split(",")[0].trim().toLowerCase();
+
+  const groups = new Map<string, T[]>();
+  for (const item of byMake) {
+    const key = role(item.part.description);
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  }
+
+  const keep = new Set<T>();
+  for (const group of groups.values()) {
+    if (group.length === 1) {
+      keep.add(group[0]);
+      continue;
+    }
+    const matching = group.filter((i) => mentionsModel(i.part.description));
+    for (const i of matching.length ? matching : group) keep.add(i);
+  }
+  return byMake.filter((i) => keep.has(i));
+}
+
+/**
+ * A technician often quotes one time for a whole job ("call it three, maybe
+ * three and a half hours"). Extraction attaches it to one finding; if it does
+ * not fit that line's standard but fits the largest line in the job, move it
+ * there. Returns the matches with hours reassigned plus a note for the trace.
+ */
+export function reassignJobLevelHours(
+  matches: OperationMatchResult[],
+  vessel: Vessel,
+): { matches: OperationMatchResult[]; notes: string[] } {
+  const notes: string[] = [];
+  const withHours = matches.filter((m) => m.finding.estimatedHours != null && m.code);
+  if (withHours.length !== 1 || matches.filter((m) => m.code).length < 2) return { matches, notes };
+
+  const source = withHours[0];
+  const hours = source.finding.estimatedHours as number;
+  const standardOf = (m: OperationMatchResult) => (m.code!.standardHours * engineMultiplier(m, vessel));
+  const fits = (std: number) => hours / std >= 0.5 && hours / std <= 1.5;
+  if (fits(standardOf(source))) return { matches, notes };
+
+  const target = matches
+    .filter((m) => m.code && m.finding.estimatedHours == null)
+    .sort((a, b) => standardOf(b) - standardOf(a))[0];
+  if (!target || !fits(standardOf(target))) return { matches, notes };
+
+  notes.push(
+    `Technician's ${hours} h does not fit ${source.code!.code} (standard ${standardOf(source)} h); applied to the largest line ${target.code!.code} (standard ${standardOf(target)} h) as a job-level estimate.`,
+  );
+  const out = matches.map((m) => {
+    if (m === source) return { ...m, finding: { ...m.finding, estimatedHours: null } };
+    if (m === target) return { ...m, finding: { ...m.finding, estimatedHours: hours } };
+    return m;
+  });
+  return { matches: out, notes };
 }
 
 export interface BuildEstimateOptions {
@@ -268,8 +340,9 @@ export async function buildEstimates(opts: BuildEstimateOptions): Promise<DraftE
   for (const group of groups) {
     const lines: EstimateLineInput[] = [];
     const flags: HistoryFlag[] = [];
+    const reassigned = reassignJobLevelHours(group.matches, vessel);
     let sort = 0;
-    for (const m of group.matches) {
+    for (const m of reassigned.matches) {
       const built = await buildLinesForMatch(opts, m, sort);
       lines.push(...built.lines);
       flags.push(...built.flags);
@@ -291,6 +364,7 @@ export async function buildEstimates(opts: BuildEstimateOptions): Promise<DraftE
       photoPaths: opts.photoPaths ?? [],
       lines,
       findingIndexes: group.matches.map((m) => m.findingIndex),
+      buildNotes: reassigned.notes,
     });
   }
   return drafts;

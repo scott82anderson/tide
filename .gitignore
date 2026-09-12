@@ -46,3 +46,11 @@ next-env.d.ts
 # local sqlite
 prisma/dev.db
 prisma/dev.db-journal
+
+# playwright smoke screenshots
+smoke-shots/
+
+# Neon marketplace agent skills (installed by vercel integration add)
+.agents/
+skills-lock.json
+.claude/

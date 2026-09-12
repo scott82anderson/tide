@@ -38,6 +38,19 @@ describe("suggestSlot", () => {
     expect(s?.end.toISOString()).toBe("2026-09-15T21:00:00.000Z");
   });
 
+  it("keeps the job with the diagnosing technician when they have a slot this week", () => {
+    const tony: Technician = { ...marcus, id: "tech_tony", name: "Tony", skills: ["engine"] };
+    // Tony is free all week; Marcus is booked Mon and Tue morning.
+    const blocks: ScheduleBlock[] = [
+      block("2026-09-14T12:00:00Z", "2026-09-14T21:00:00Z"),
+      block("2026-09-15T12:00:00Z", "2026-09-15T16:00:00Z"),
+    ];
+    expect(suggestSlot(wo, [tony, marcus], blocks)?.technician.id).toBe("tech_tony");
+    const kept = suggestSlot(wo, [tony, marcus], blocks, undefined, "tech_marcus_reyes");
+    expect(kept?.technician.id).toBe("tech_marcus_reyes");
+    expect(kept?.reason).toMatch(/diagnosed the job/);
+  });
+
   it("returns null when no technician has the skills", () => {
     expect(suggestSlot(wo, [rigger], [])).toBeNull();
   });

@@ -145,6 +145,7 @@ export async function runDraftPipeline(
       techNoteId: input.techNoteId,
       photoPaths: input.photoPaths,
     });
+    for (const d of drafts) notes.push(...d.buildNotes);
     steps.push({
       step: "build_estimate",
       latencyMs: Date.now() - t5,
@@ -164,9 +165,10 @@ export async function runDraftPipeline(
   // Step 6: narrative
   if (vessel && drafts.length && !input.skipNarrative) {
     input.onStage?.("writing");
-    const next: DraftEstimate[] = [];
-    for (const draft of drafts) {
-      const n = await writeNarrative(ai, draft, vessel, input.transcript);
+    // One narrative call per draft, in parallel: they are independent.
+    const narratives = await Promise.all(drafts.map((d) => writeNarrative(ai, d, vessel, input.transcript)));
+    drafts = drafts.map((draft, i) => {
+      const n = narratives[i];
       steps.push({
         step: "write_narrative",
         latencyMs: n.latencyMs,
@@ -174,9 +176,8 @@ export async function runDraftPipeline(
         input: { title: draft.title },
         output: n.output,
       });
-      next.push(applyNarrative(draft, n.output));
-    }
-    drafts = next;
+      return applyNarrative(draft, n.output);
+    });
   }
 
   return {

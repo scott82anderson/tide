@@ -1,0 +1,125 @@
+{
+  "_comment": "Golden set for the drafting pipeline (steps 2-5). expectedVesselId null means the vessel is not in the system. expectedCodes is a set. expectedSeparate is true when the technician asks for a separate quote.",
+  "cases": [
+    {
+      "id": "sea-ray-overheat",
+      "kind": "clear",
+      "transcript": "Hull number ending 4471, that's the Sea Ray 400 Sundancer in slip C-12, Patterson. Port engine running hot at cruise, about 205. Impeller is chewed up, missing two vanes. Raw water pump is weeping at the seal. Recommend replace impeller and the pump, flush the cooling system, check the heat exchanger for vane debris. Call it three, maybe three and a half hours. Also the starboard trim tab actuator is leaking, we should quote that separately.",
+      "expectedVesselId": "ves_reel_therapy",
+      "expectedCodes": ["ENG-IMP-01", "ENG-RWP-01", "ENG-CLF-01", "ENG-HEX-01", "HYD-TAB-01"],
+      "expectedSeparate": true
+    },
+    {
+      "id": "grady-white-electrical",
+      "kind": "clear",
+      "transcript": "Okay, this is the Grady-White Canyon 306 in slip B-04, Whitaker, hull ends 2217. House bank won't hold a charge overnight, he's waking up to dead batteries with the fridge on. Both group 31s are original, they load test bad. Terminals are green, the negative cable end is half eaten. Also the bilge pump float switch is stuck, the pump only runs on manual. Recommend we replace the house bank with three AGMs, clean up and re-end the cables, and swap the float switch. Figure two and a half hours for the batteries and cables, maybe forty-five minutes for the switch.",
+      "expectedVesselId": "ves_salt_shaker",
+      "expectedCodes": ["ELE-BAT-01", "ELE-TRM-01", "ELE-BLG-01"],
+      "expectedSeparate": false
+    },
+    {
+      "id": "catalina-rigging",
+      "kind": "clear",
+      "transcript": "Catalina 385, Windward Sky, slip A-08, owner is Marsh. Went up the stick for the annual rig check. Found a cracked swage on the forestay right at the lower fitting, there's a hairline crack and some rust bleeding, that needs to come off before she sails again. Cap shrouds and lowers look fine, pins and cotters are good. Main halyard is chafed through the cover about six feet from the shackle, the core is showing. Recommend a new forestay and a new main halyard. Rig work is probably three hours for the stay and an hour and a half for the halyard.",
+      "expectedVesselId": "ves_windward_sky",
+      "expectedCodes": ["RIG-STD-01", "RIG-FST-01", "RIG-HAL-01"],
+      "expectedSeparate": false
+    },
+    {
+      "id": "whaler-lower-unit-slang",
+      "kind": "slang",
+      "transcript": "Blue Heron, the Whaler 285 in rack B-07, Kowalski. Starboard lower unit is toast, gear lube came out milky and there's metal in it. Needs a reseal at minimum, probably a full rebuild. And the prop on that side is dinged up pretty bad, spun the hub too, we should swap it.",
+      "expectedVesselId": "ves_blue_heron",
+      "expectedCodes": ["DRV-LU-01", "DRV-PRP-02"],
+      "expectedSeparate": false
+    },
+    {
+      "id": "chen-sea-ray-ambiguous-owner",
+      "kind": "ambiguous-vessel",
+      "transcript": "Chen's Sea Ray, the 350 Sundancer down in C-5. Both engines are due oil and filters, and the engine zincs are gone. Do the oil change on both and swap the anodes.",
+      "expectedVesselId": "ves_serendipity",
+      "expectedCodes": ["ENG-OIL-01", "ENG-ANO-01"],
+      "expectedSeparate": false
+    },
+    {
+      "id": "viking-multi-system",
+      "kind": "multi-system",
+      "transcript": "Lady Luck, Viking 55 in D-1, Greer. Port main overheated on the way in, 210 on the gauge. Impeller is shredded. Both mains are also due a coolant flush, it's been over two years. And the head in the forward stateroom won't hold water, the joker valve is shot. Do the impeller, flush both engines, and rebuild the head.",
+      "expectedVesselId": "ves_lady_luck",
+      "expectedCodes": ["ENG-IMP-01", "ENG-CLF-01", "PLB-HED-01"],
+      "expectedSeparate": false
+    },
+    {
+      "id": "nothing-actionable",
+      "kind": "nothing-actionable",
+      "transcript": "Walked Persistence at B-9 with Donnelly this morning. Everything looks fine, both Yamahas sound good, no leaks in the bilge, just topped off the fluids and checked the trim. No work needed right now.",
+      "expectedVesselId": "ves_persistence",
+      "expectedCodes": [],
+      "expectedSeparate": false
+    },
+    {
+      "id": "vessel-not-in-system",
+      "kind": "unknown-vessel",
+      "transcript": "This is the Bertram 31, Osprey, in slip F-22, owner Kowalczyk, hull ends 9917. Bilge pump is dead, no response on auto or manual, need a new Rule pump in there.",
+      "expectedVesselId": null,
+      "expectedCodes": ["ELE-BLG-02"],
+      "expectedSeparate": false
+    },
+    {
+      "id": "beneteau-winterise",
+      "kind": "clear",
+      "transcript": "Second Wind, the Beneteau 41 in A-2, Alvarez. She wants the boat laid up for the season. Winterise the Yanmar, winterise the fresh water system with the pink stuff, and shrink wrap her for storage.",
+      "expectedVesselId": "ves_second_wind",
+      "expectedCodes": ["WNT-ENG-01", "WNT-FW-01", "HAL-SHR-01"],
+      "expectedSeparate": false
+    },
+    {
+      "id": "catalina-bottom-paint",
+      "kind": "multi-system",
+      "transcript": "Wanderlust, Catalina 320, Sullivan, slip A-6. Bottom is covered in barnacles and the paint is gone. Haul her out, pressure wash, sand and repaint the bottom, and replace the shaft zinc while she's out of the water.",
+      "expectedVesselId": "ves_wanderlust",
+      "expectedCodes": ["HAL-HLB-01", "HUL-BTM-01", "HUL-ZNC-01"],
+      "expectedSeparate": false
+    },
+    {
+      "id": "regulator-outboard-service-separate",
+      "kind": "separate-quote",
+      "transcript": "Off the Clock, Regulator 28 on rack A-12, Oyelaran. Both Yamahas are at 300 hours, they're due the 100 hour service. Also the starboard trim tab actuator is weeping, quote that one separate.",
+      "expectedVesselId": "ves_off_the_clock",
+      "expectedCodes": ["ENG-OB1-01", "HYD-TAB-01"],
+      "expectedSeparate": true
+    },
+    {
+      "id": "whaler-nav-lights-shore-power",
+      "kind": "multi-system",
+      "transcript": "Northern Light, the 345 Conquest in B-14, Ostrowski. Nav lights are out, both the stern light and the bow light. Shore power inlet is melted on one blade too, that's a fire waiting to happen. Replace the nav lights and the shore power inlet.",
+      "expectedVesselId": "ves_northern_light",
+      "expectedCodes": ["ELE-NAV-01", "ELE-SHP-01"],
+      "expectedSeparate": false
+    },
+    {
+      "id": "greer-second-boat-ambiguous",
+      "kind": "ambiguous-vessel",
+      "transcript": "Greer's little Whaler, the Montauk up on the rack. Won't crank, just clicks. Battery load tests fine so it's the starter.",
+      "expectedVesselId": "ves_little_luck",
+      "expectedCodes": ["ENG-STR-01"],
+      "expectedSeparate": false
+    },
+    {
+      "id": "pursuit-steering",
+      "kind": "clear",
+      "transcript": "Kingfisher, Pursuit 385, B-1, Brennan. Steering is spongy and there's hydraulic fluid in the bilge under the helm. The cylinder is leaking at the rod seal. Replace the steering cylinder and bleed the system after.",
+      "expectedVesselId": "ves_kingfisher",
+      "expectedCodes": ["HYD-STR-01", "HYD-STR-02"],
+      "expectedSeparate": false
+    },
+    {
+      "id": "fika-hin-only",
+      "kind": "ambiguous-vessel",
+      "transcript": "Boat with hull number ending 7891. Bimini is torn along the zipper and the gelcoat on the transom has a chip from the dock. Fix the bimini and repair the chip.",
+      "expectedVesselId": "ves_fika",
+      "expectedCodes": ["CNV-BIM-01", "HUL-GEL-01"],
+      "expectedSeparate": false
+    }
+  ]
+}

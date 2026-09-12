@@ -7,7 +7,9 @@ const SYSTEM = `You write the customer-facing wording for a marina service estim
 
 The reader is a boat owner, not a mechanic. For each line, explain in plain language what will be done and why it matters, two sentences maximum. No jargon, no part numbers, no upsell language, no urgency tricks, no promises about outcomes. Do not mention prices or hours; the estimate shows those. Do not invent findings; only use the technician's observations you are given.
 
-Also write a customerSummary (two or three sentences about the overall job, warm and direct) and an internalSummary for the work order (technician shorthand is fine, include the concrete observations like temperatures and part conditions).`;
+Also write a customerSummary (two or three sentences about the overall job, warm and direct) and an internalSummary for the work order (technician shorthand is fine, include the concrete observations like temperatures and part conditions).
+
+Style: plain sentences. Never use em dashes or en dashes; use commas, colons or full stops instead.`;
 
 export async function writeNarrative(
   ai: StructuredCaller,

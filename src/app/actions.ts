@@ -119,6 +119,7 @@ export async function sendForESign(estimateId: string) {
 /** Converts an approved estimate and asks the scheduling assistant for a slot. */
 export async function convertEstimateToWorkOrder(estimateId: string) {
   const client = getDockMasterClient();
+  const estimate = await client.getEstimate(estimateId);
   const workOrder = await client.convertToWorkOrder(estimateId);
   await client.logActivity({
     actor: "staff",
@@ -134,7 +135,7 @@ export async function convertEstimateToWorkOrder(estimateId: string) {
     client.listTechnicians(),
     client.listScheduleBlocks({ start: weekStart, end: addDays(weekStart, 14) }),
   ]);
-  const suggestion = suggestSlot(workOrder, technicians, blocks);
+  const suggestion = suggestSlot(workOrder, technicians, blocks, undefined, estimate?.technicianId ?? null);
   if (suggestion) {
     const block = await client.createScheduleBlock({
       technicianId: suggestion.technician.id,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { AlertTriangle, Loader2, Mail, MessageSquare, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { markOutreachSent } from "@/app/actions";
@@ -58,10 +58,14 @@ type DialogState =
 export function DueForServicePanel({ vessels }: { vessels: DueVessel[] }) {
   const [choice, setChoice] = useState<Record<string, string>>({});
   const [dialog, setDialog] = useState<DialogState>({ status: "idle" });
+  // Closing the dialog mid-request must not let the late response re-open it.
+  const requestId = useRef(0);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   async function draft(vessel: DueVessel, code: string) {
+    const id = ++requestId.current;
+    const stale = () => id !== requestId.current;
     setDialog({ status: "loading", vessel, code, stage: "Pricing from operation code and kit" });
     const timer = setTimeout(
       () => setDialog((d) => (d.status === "loading" ? { ...d, stage: "Writing message" } : d)),
@@ -75,9 +79,11 @@ export function DueForServicePanel({ vessels }: { vessels: DueVessel[] }) {
       });
       const body = (await res.json()) as OutreachResponse & { error?: string };
       if (!res.ok || body.error) throw new Error(body.error ?? "Could not draft outreach.");
+      if (stale()) return;
       setDialog({ status: "done", vessel, code, result: body });
       router.refresh();
     } catch (err) {
+      if (stale()) return;
       setDialog({ status: "error", vessel, code, message: err instanceof Error ? err.message : "Could not draft outreach." });
     } finally {
       clearTimeout(timer);
@@ -150,7 +156,11 @@ export function DueForServicePanel({ vessels }: { vessels: DueVessel[] }) {
         })}
       </ul>
 
-      <Dialog open={dialog.status !== "idle"} onOpenChange={(open) => !open && setDialog({ status: "idle" })}>
+      <Dialog open={dialog.status !== "idle"} onOpenChange={(open) => {
+          if (open) return;
+          requestId.current++;
+          setDialog({ status: "idle" });
+        }}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
           {dialog.status !== "idle" && (
             <DialogHeader>

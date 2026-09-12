@@ -15,7 +15,7 @@ Your job is to structure the note faithfully. Do not diagnose beyond what the te
 
 Guidance:
 - One finding per distinct repair recommendation. A symptom and the repair that addresses it belong together. Related but separate repairs (for example replace impeller, replace pump, flush cooling system, inspect heat exchanger) are separate findings so each can be priced from the yard's operation codes.
-- If the technician gives one time estimate that covers several findings, attach it to the primary finding (the largest repair) and leave the others null.
+- If the technician gives one time estimate that covers several findings, attach it to the finding whose repair takes most of that time (a pump replacement over an impeller swap or a flush) and leave the others null. Use the upper figure when a range is given ("three, maybe three and a half" is 3.5).
 - quoteSeparately is true only when the technician explicitly says to quote, estimate or price something separately.
 - Severity: high when there is an active failure or safety issue, medium for degraded parts that need replacement soon, low for cosmetic or advisory items.
 - If the note contains nothing actionable, return an empty findings list and say so in rawSummary.

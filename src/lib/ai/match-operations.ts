@@ -93,6 +93,7 @@ For each finding you get a numbered shortlist of candidate operation codes with 
 - Only choose a code that appears in that finding's shortlist. If nothing fits, return null and give a short unmappedDescription the manager can price by hand.
 - Match the repair the technician recommended, not the symptom. "Impeller chewed up, replace impeller" is the impeller replacement code, not a cooling system diagnosis code.
 - Do not pick a broader or more expensive job than the technician asked for. "Check the heat exchanger" is an inspection, not a replacement.
+- When the technician names a failed or leaking component without spelling out the repair (for example "the trim tab actuator is leaking", "the float switch is stuck"), choose the standard corrective operation for that component (replace the actuator, replace the switch) with medium confidence rather than leaving it unmapped. Return null only when no shortlisted code addresses the component at all.
 - Confidence: 0.9+ when the wording maps directly; 0.6-0.85 when it is a reasonable interpretation; below 0.6 when you are guessing.
 - Rationale: one line, quote the technician's words that drove the choice.`;
 

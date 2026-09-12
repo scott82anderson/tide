@@ -5,7 +5,7 @@
 
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { prisma as defaultPrisma } from "@/lib/db";
-import { DEMO_TODAY, addDays, daysBetween } from "@/lib/demo-date";
+import { DEMO_TODAY, addDays, daysBetween, demoNow } from "@/lib/demo-date";
 import { parseJson, round2 } from "@/lib/utils";
 import { predictDueForService } from "@/lib/due-for-service";
 import { rankVesselCandidates } from "./match-rules";
@@ -693,8 +693,8 @@ export class PrismaDockMasterClient implements DockMasterClient {
         entityType: input.entityType,
         entityId: input.entityId,
         payload: JSON.stringify(input.payload ?? {}),
-        // Real wall clock here so the log orders correctly within a demo session.
-        createdAt: new Date(),
+        // Demo day plus the real time of day, so the log orders correctly within a session.
+        createdAt: demoNow(),
       },
     });
     return toActivity(a);
