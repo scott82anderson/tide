@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Anchor, ClipboardList, Database, FlaskConical, LayoutDashboard, Plus } from "lucide-react";
+import { Anchor, ClipboardList, Database, FlaskConical, LayoutDashboard, Plus, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DEMO_TODAY, formatDate } from "@/lib/demo-date";
@@ -12,11 +12,13 @@ const NAV = [
   { href: "/jobs", label: "Drafts", icon: ClipboardList },
   { href: "/data", label: "Data", icon: Database },
   { href: "/eval", label: "Eval", icon: FlaskConical },
+  { href: "/gtm", label: "Go-to-market", icon: Target },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isPortal = pathname.startsWith("/portal");
+  // The owner portal and the public Try-It tool stand outside the back office.
+  const isPortal = pathname.startsWith("/portal") || pathname.startsWith("/try");
 
   if (isPortal) {
     return <div className="min-h-screen bg-background">{children}</div>;

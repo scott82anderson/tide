@@ -12,6 +12,7 @@ const wo: WorkOrderSummary = {
   openedAt: new Date("2026-09-14T13:00:00Z"),
   closedAt: null,
   technicianName: null,
+  hoursStandard: 4.5,
   hoursBilled: 0,
   total: 0,
   operations: [

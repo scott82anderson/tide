@@ -16,7 +16,9 @@
     "eval": "tsx scripts/eval.ts",
     "vercel-build": "bash scripts/vercel-build.sh",
     "demo:draft": "tsx scripts/demo-draft.ts",
-    "smoke": "tsx scripts/smoke.ts"
+    "smoke": "tsx scripts/smoke.ts",
+    "gtm:scout": "tsx scripts/gtm-scout.ts",
+    "gtm:smoke": "tsx scripts/gtm-smoke.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",

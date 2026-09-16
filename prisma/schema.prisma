@@ -276,3 +276,178 @@ model ScheduleBlock {
   end          DateTime
   source       String     @default("staff") // staff | ai_suggested
 }
+
+// ---------------------------------------------------------------------------
+// Go-to-market workspace. These models stand in for the CRM (the agents' shared
+// memory), the DockMaster data warehouse extract each account consented to,
+// product telemetry, and the review queue where humans approve agent output.
+// See src/lib/gtm/client.ts for the production mapping.
+// ---------------------------------------------------------------------------
+
+model Account {
+  id                  String            @id @default(cuid())
+  name                String
+  city                String
+  state               String
+  segment             String // install_base | new_logo | group
+  platform            String // dockmaster_desktop | dockmaster_web | dockmaster_web_mobile | molo | marinaoffice | spreadsheets | none
+  products            String            @default("[]") // JSON string[]: web, mobile, valpay, blu, scheduling
+  groupName           String?
+  source              String            @default("seed") // seed | try_it | conference | partner
+  stage               String            @default("target") // target | contacted | sandbox | call | proposal | closed_won | closed_lost | onboarding | live
+  tier                String? // service_writer | ai_service_desk | revenue_suite | group
+  ownerName           String? // CSM or AE who owns the relationship
+  ownerRole           String? // CSM | AE
+  designPartner       Boolean           @default(false)
+  dataConsent         Boolean           @default(false)
+  consentGrantedAt    DateTime?
+  smsOptIn            Boolean           @default(false)
+  emailOptOut         Boolean           @default(false)
+  conferenceAttendees String            @default("[]") // JSON {name, title}[]
+  contacts            String            @default("[]") // JSON Contact[] (from Researcher, approved)
+  vesselMix           String            @default("[]") // JSON string[]: outboard | sterndrive | inboard | sail
+  // Warehouse extract used by the Opportunity Scout when the account is not the
+  // live Harbourline yard. Trailing-twelve-month figures as of DEMO_TODAY.
+  technicianCount     Int               @default(0)
+  slipCount           Int               @default(0)
+  vesselCount         Int               @default(0)
+  laborRate           Float             @default(0)
+  standardHoursTtm    Float             @default(0)
+  billedHoursTtm      Float             @default(0)
+  estimatesTtm        Int               @default(0)
+  estimatesOver3Days  Int               @default(0)
+  avgEstimateValue    Float             @default(0)
+  vesselsPastInterval Int               @default(0)
+  avgIntervalJobValue Float             @default(0)
+  arOver45            Float             @default(0)
+  arTotal             Float             @default(0)
+  dsoDays             Int               @default(0)
+  contextFile         String            @default("")
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  signals             AccountSignal[]
+  codes               AccountCode[]
+  weeks               AccountWeek[]
+  runs                AgentRun[]
+  queueItems          QueueItem[]
+  messages            OutboundMessage[]
+  feedback            FeedbackItem[]
+}
+
+// Raw public signals the Account Researcher classifies. In production these
+// arrive from web search, review sites and LinkedIn through MCP tools.
+model AccountSignal {
+  id         String   @id @default(cuid())
+  accountId  String
+  account    Account  @relation(fields: [accountId], references: [id])
+  source     String // linkedin | google_reviews | job_posting | website | boat_show | association | news | capterra
+  title      String
+  body       String
+  url        String?
+  observedAt DateTime
+}
+
+// An account's own operation codes as exported from their system, before the
+// Onboarding Agent cleans them.
+model AccountCode {
+  id          String  @id @default(cuid())
+  accountId   String
+  account     Account @relation(fields: [accountId], references: [id])
+  code        String
+  description String
+  hours       Float
+  usageCount  Int     @default(0)
+  mergedInto  String?
+}
+
+// Weekly product telemetry for accounts on the beta or live.
+model AccountWeek {
+  id             String   @id @default(cuid())
+  accountId      String
+  account        Account  @relation(fields: [accountId], references: [id])
+  weekStart      DateTime
+  draftsStarted  Int
+  draftsApproved Int
+  editRate       Float // share of AI lines edited before approval
+  approvalRate   Float // approved / sent to customer
+  valpayVolume   Float
+  arDays         Int
+  activeTechs    Int
+}
+
+// Support tickets, call snippets, conference dot-votes, reviews.
+model FeedbackItem {
+  id         String   @id @default(cuid())
+  accountId  String?
+  account    Account? @relation(fields: [accountId], references: [id])
+  source     String // support_ticket | call_transcript | dot_vote | review
+  text       String
+  observedAt DateTime
+}
+
+model Partner {
+  id       String @id @default(cuid())
+  name     String
+  kind     String // oem | distributor | insurer | pe_operating_partner | association
+  focus    String
+  contacts String @default("[]") // JSON {name, title}[]
+  notes    String @default("")
+}
+
+// Every agent action, with inputs and outputs, written back to the CRM.
+model AgentRun {
+  id            String     @id @default(cuid())
+  agent         String
+  accountId     String?
+  account       Account?   @relation(fields: [accountId], references: [id])
+  status        String // succeeded | failed | blocked
+  input         String     @default("{}") // JSON
+  output        String     @default("{}") // JSON
+  sourceQueries String     @default("[]") // JSON SourceQuery[]: where every number came from
+  model         String?
+  modelTier     String? // none | cheap | strong
+  latencyMs     Int        @default(0)
+  error         String?
+  createdAt     DateTime   @default(now())
+  queueItems    QueueItem[]
+}
+
+// The review queue. Every agent output lands here for a named human.
+model QueueItem {
+  id           String            @id @default(cuid())
+  runId        String?
+  run          AgentRun?         @relation(fields: [runId], references: [id])
+  agent        String
+  kind         String // scout_report | research | sequence | sandbox | try_it_lead | rfp_answer | proposal | call_notes | onboarding_plan | health_report | case_study | voc_report | conference_plan | partner_brief
+  accountId    String?
+  account      Account?          @relation(fields: [accountId], references: [id])
+  title        String
+  output       String            @default("{}") // JSON, the agent's draft
+  sourceData   String            @default("{}") // JSON, what the agent saw
+  approverRole String
+  status       String            @default("pending") // pending | approved | edited | rejected
+  reviewerName String?
+  reviewedAt   DateTime?
+  editedOutput String? // JSON, the human's version when status is edited
+  editRatio    Float? // characters changed / characters drafted
+  reviewNote   String?
+  createdAt    DateTime          @default(now())
+  messages     OutboundMessage[]
+}
+
+// Outbound touches. Only created by a human click on an approved sequence.
+model OutboundMessage {
+  id          String     @id @default(cuid())
+  accountId   String
+  account     Account    @relation(fields: [accountId], references: [id])
+  queueItemId String?
+  queueItem   QueueItem? @relation(fields: [queueItemId], references: [id])
+  touchIndex  Int        @default(0)
+  channel     String // email | sms | linkedin | call
+  subject     String?
+  body        String
+  approvedBy  String
+  sentAt      DateTime
+  status      String     @default("sent") // sent | replied | bounced | opted_out
+  repliedAt   DateTime?
+}

@@ -117,6 +117,7 @@ export interface WorkOrderSummary {
   openedAt: Date;
   closedAt: Date | null;
   technicianName: string | null;
+  hoursStandard: number;
   hoursBilled: number;
   total: number;
   operations: WorkOrderOperationSummary[];

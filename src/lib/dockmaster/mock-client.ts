@@ -161,6 +161,7 @@ function toWorkOrderSummary(w: WorkOrderRow): WorkOrderSummary {
     openedAt: w.openedAt,
     closedAt: w.closedAt,
     technicianName: w.technician?.name ?? null,
+    hoursStandard: w.hoursStandard,
     hoursBilled: w.hoursBilled,
     total: w.total,
     operations: w.operations.map((op) => ({

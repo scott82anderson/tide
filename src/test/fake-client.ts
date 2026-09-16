@@ -160,6 +160,7 @@ export const reelTherapyHistory: WorkOrderSummary[] = [
     openedAt: new Date("2024-07-10T12:00:00Z"),
     closedAt: new Date("2024-07-16T12:00:00Z"),
     technicianName: "Marcus Reyes",
+    hoursStandard: 2.0,
     hoursBilled: 2.2,
     total: 612.4,
     operations: [

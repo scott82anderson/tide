@@ -163,6 +163,47 @@ public/samples/        sample audio, transcripts, photos
 scripts/               draft, demo-draft, eval, smoke, vercel-build
 ```
 
+## Go-to-market workspace
+
+The companion GTM document ("sell every marina its own money") describes fourteen Claude-based agents that do the selling while people own relationships, approvals and sends. The prototype implements that stack under `/gtm`, on the same database and the same architectural rules as the Service Writer: one client boundary, structured model calls, shortlist-only validation, a human click before anything leaves.
+
+**Demo path (five minutes)**
+
+1. `/gtm`: the console. Funnel counts, the ranked target list from the Opportunity Scout, the review queue, the phase plan.
+2. `/gtm/accounts/acc_bayhaven`: a design partner. The Scout report is the "Revenue Left on the Dock" sentence built from the account's own numbers, with every figure linked to the query that produced it and every recovery rate labelled as an assumption. Click **Run Researcher**: the cheap model classifies the seeded public signals (a new service manager, two slow-quote reviews) into triggers, each citing its signal id. Click **Draft sequence**: the strong model writes three touches with the account's numbers; a deterministic lint checks brand voice, appends the opt-out line and rejects any number that does not link back to a Scout figure.
+3. `/gtm/queue/[id]`: the review queue. Approve, edit (the edit is measured as the agent's edit rate) or reject as a named person. On a sequence, the **Send** buttons stay disabled until it is approved. Call scripts are never sent.
+4. `/try`: the free "Estimate from a tech note" tool, outside the back office. Paste a note, get a draft from the product pipeline against the public sample yard, leave your details and a Try-It lead lands on the queue for Marketing. `/try?account=acc_bayhaven` is the sandbox the Demo Builder seeded for that prospect.
+5. `/gtm/desk`: paste the sample call transcript and the Objection Coach matches "we tried voice-to-text and it was junk" to the library with the golden-set answer. The Sales Engineer answers RFP questions citing only the knowledge documents and flags what it cannot answer.
+6. `/gtm/accounts/acc_northstar` (**Score health**): the Adoption Agent, deterministic, shows the edit rate falling from 40% to 12% and flags the Revenue Suite upsell because AR days are 49. `/gtm/accounts/acc_pelican_point` (**Plan onboarding**): the Onboarding Agent finds the duplicate codes in a messy export; approving the plan is the one write to DockMaster any GTM agent makes. `/gtm/accounts/acc_bh_hilton_head`: the cross-site league table for a PE-backed group.
+7. `/gtm/metrics` and `/gtm/agents`: the weekly metrics (funnel, agent quality, product value, business) and the roster with model tier, owner and guardrails.
+
+**Agents** (`src/lib/gtm/agents/`). Each is an `AgentDefinition` with a job, inputs, output, a named approver and a model tier. The runner (`runner.ts`) reads the CRM record first, runs the agent, records the run with inputs and outputs (including blocked and failed runs), puts the output on the queue and appends a line to the account's context file.
+
+| Agent | Model | What it does in the prototype |
+| --- | --- | --- |
+| Opportunity Scout | none | Computes the report per account. Harbourline reads live through the `DockMasterClient`; other consented accounts read the warehouse extract on the CRM record; accounts without consent get public signals and a low-confidence label. |
+| Account Researcher | cheap | Classifies seeded public signals into triggers and decision makers; every claim cites a signal id, unknown ids are dropped. |
+| Sequencer | strong | Three touches from the account's numbers and triggers, linted (hype, exclamation marks, length, opt-out line, truth in numbers), one redraft on failure. SMS only with opt-in. |
+| Demo Builder | strong | Picks a catalogue from the prospect's vessel mix and writes a 90-second walkthrough plus a sample tech note for the Try-It page. |
+| Try-It Concierge | strong | Runs the product pipeline on a pasted note; a lead becomes an account and a queue item. Works without a key on the bundled sample. |
+| Sales Engineer | strong | Answers from `knowledge.ts`, cites document ids, flags gaps for a human. |
+| Deal Desk | strong | Deterministic pricing and discount policy (`pricing.ts`), ROI from the Scout figures, a linted narrative. Discounts above the Finance ceiling are refused. |
+| Objection Coach | strong | Matches transcript objections to `objection-library.ts`; a new objection is routed to Voice of Customer. |
+| Onboarding Agent | cheap | Duplicate candidates by token overlap, merges confirmed by the model, keywords, kits, checklist, training plan. Merges apply after CSM approval. |
+| Adoption Agent | none | Health score, nudges, expansion triggers and churn risk from weekly telemetry. |
+| Proof Agent | strong | Case study from before-and-after telemetry, only with consent, numbers linted. |
+| Voice of Customer | cheap | Groups feedback into themes; revenue at stake is the sum of Scout totals behind each theme. |
+| Conference Concierge | strong | Ranks registered accounts, books Open Lab slots, writes talking points. |
+| Partner Agent | strong | Partner brief, co-marketing ideas, lead routing. |
+
+Model routing: `MODEL_STRONG` is the project's `claude-sonnet-4-6`, `MODEL_CHEAP` is `claude-haiku-4-5` (`src/lib/ai/anthropic.ts`).
+
+**Guardrails**, in code. Consent first (the Scout checks `dataConsent` before touching account data). Human send (`sendTouchAction` refuses unless the queue item is approved and a named person is sending). Compliance (opt-out line appended deterministically, no SMS without opt-in, call scripts never sent). Truth in numbers (`style-lint.ts` extracts every dollar and count in a draft and matches it to a `SourceQuery` the agent was given). Discount policy. Brand voice lint. Audit (every run to `AgentRun`). Shortlist only (signal, document, objection and code ids validated against the list shown).
+
+**Scripts**: `pnpm gtm:scout` scores every account through the runner (no model). `pnpm gtm:smoke` walks the path above in Playwright against a running dev server.
+
+**Simulated**: the CRM, warehouse extract, telemetry and public signals are seeded tables behind `GtmClient` (`src/lib/gtm/client.ts` maps each method to HubSpot or Salesforce, the DockMaster warehouse and the telemetry warehouse). Sending is logged, not sent. Deliverability, sending domains and the real sequencing tool are out of scope.
+
 ## Deployment
 
 The project deploys to Vercel with Neon Postgres. `scripts/vercel-build.sh` switches the Prisma datasource provider to `postgresql` (the one-line change the schema was written for), pushes the schema, reseeds the demo data on every deploy, then runs `next build`. Environment: `DATABASE_URL` (from the Neon integration), `ANTHROPIC_API_KEY`, optionally `OPENAI_API_KEY`.
