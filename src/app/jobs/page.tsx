@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { EstimatesTable } from "@/components/dashboard/estimates-table";
+import { FilterLink } from "@/components/filter-link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getDockMasterClient } from "@/lib/dockmaster/mock-client";
 import type { EstimateStatus } from "@/lib/dockmaster/types";
 import { STATUS_LABEL } from "@/lib/estimate-status";
-import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -58,19 +58,5 @@ export default async function JobsPage({
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function FilterLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "rounded-md border px-2.5 py-1 transition-colors hover:bg-accent",
-        active ? "border-primary bg-primary text-primary-foreground hover:bg-primary" : "border-border",
-      )}
-    >
-      {children}
-    </Link>
   );
 }

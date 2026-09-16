@@ -47,6 +47,7 @@ The demo date is Monday, 14 September 2026. Every screen uses `DEMO_TODAY`, neve
 8. **Due for service** panel: seven vessels past an interval. Click **Draft outreach** on one. A priced estimate is created from the operation code and kit, and a short SMS and email are drafted for review. Nothing is sent until you click.
 9. **Overdue invoices** panel: six accounts from 9 to 92 days past due. Click **Send payment reminder**. The tone follows the age (friendly under 30 days, firm 30 to 60, final over 60), a simulated ValPay link is generated, and the send is logged.
 10. Open `/eval` for the golden set results.
+11. Open `/data` to browse the records everything above was drawn from: operation codes with their parts kits, vessels, customers, parts, technicians, work orders and invoices. Search, facet and sort run in the browser; the URL carries the view.
 
 ## Architecture
 
@@ -61,6 +62,7 @@ The demo date is Monday, 14 September 2026. Every screen uses `DEMO_TODAY`, neve
    |   /jobs/new  ---> POST /api/draft (NDJSON progress) ---> /jobs/[id] ---> /portal/estimates   |
    |   /            dashboard: queue, scheduler strip, due-for-service, overdue AR, activity      |
    |   /eval        golden set results                                                            |
+   |   /data        browse and filter the seeded DockMaster records (same client, read-only)      |
    +---------------------------------------+------------------------------------------------------+
                                            |
                      +---------------------+---------------------+
@@ -148,9 +150,10 @@ The two misses are both recall, not precision, and both are judgement calls rath
 
 ```
 src/
-  app/                 pages, server actions, route handlers
-  components/          shadcn-based UI (dashboard, intake, review, portal)
+  app/                 pages, server actions, route handlers (/data browses the seeded records)
+  components/          shadcn-based UI (dashboard, intake, review, portal, data browser)
   lib/dockmaster/      client.ts (interface), mock-client.ts (Prisma), types.ts, match-rules.ts
+  lib/data-browser/    entity registry, row serialisers, pure filter/sort/URL-state helpers for /data
   lib/ai/              anthropic.ts, schemas.ts, extract, match-vessel, match-operations, build-estimate, narrative, pipeline, outreach, reminders
   lib/transcribe/      Transcriber interface, whisper.ts, paste.ts
   lib/scheduling/      suggest-slot.ts

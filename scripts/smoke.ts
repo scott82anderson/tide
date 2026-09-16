@@ -122,6 +122,15 @@ async function main() {
   await page.getByText(/Golden set evaluation/).waitFor();
   await shot(page, "eval");
 
+  log("11. Data page");
+  await page.goto(`${BASE}/data/parts`);
+  await page.getByTestId("result-count").waitFor();
+  await page.getByRole("searchbox").fill("impeller");
+  await page.waitForURL(/q=impeller/);
+  await page.getByTestId("result-count").filter({ hasNotText: /^158 of/ }).waitFor();
+  await page.getByRole("button", { name: /expand row/i }).first().click();
+  await shot(page, "data-parts");
+
   await browser.close();
   log("done");
 }

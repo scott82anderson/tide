@@ -19,7 +19,11 @@
  *   getVesselHistory        GET  /api/v1/vessels/{id}/work-orders?status=closed
  *   listOperationCodes      GET  /api/v1/service/operation-codes (cache 1 h)
  *   getPartsKit             GET  /api/v1/service/operation-codes/{code}/kit
+ *   listPartsKits           GET  /api/v1/service/kits
  *   getPartStock            GET  /api/v1/inventory/parts?numbers=a,b,c
+ *   listParts               GET  /api/v1/inventory/parts
+ *   listCustomers           GET  /api/v1/customers
+ *   listInvoices            GET  /api/v1/ar/invoices
  *   createEstimate          POST /api/v1/service/estimates
  *   updateEstimate          PATCH /api/v1/service/estimates/{id}
  *   sendEstimateForSignature POST /api/v1/service/estimates/{id}/send
@@ -87,7 +91,9 @@ export interface DockMasterClient {
   listOperationCodes(): Promise<OperationCode[]>;
   getOperationCode(code: string): Promise<OperationCode | null>;
   getPartsKit(operationCode: string): Promise<PartsKit | null>;
+  listPartsKits(): Promise<PartsKit[]>;
   getPartStock(partNumbers: string[]): Promise<Part[]>;
+  listParts(): Promise<Part[]>;
 
   // Tech notes and estimates
   createTechNote(input: TechNoteInput): Promise<TechNote>;
@@ -102,6 +108,7 @@ export interface DockMasterClient {
   // Proactive panels
   listVesselsDueForService(): Promise<DueForServiceItem[]>;
   listOverdueInvoices(): Promise<OverdueInvoice[]>;
+  listInvoices(): Promise<Invoice[]>;
   getInvoice(id: string): Promise<Invoice | null>;
   createPaymentLink(invoiceId: string): Promise<PaymentLink>;
 
@@ -123,4 +130,5 @@ export interface DockMasterClient {
   // Dashboard
   getDashboardCounts(): Promise<DashboardCounts>;
   getCustomer(id: string): Promise<Customer | null>;
+  listCustomers(): Promise<Customer[]>;
 }
