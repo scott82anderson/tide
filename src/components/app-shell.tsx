@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Anchor, ClipboardList, FlaskConical, LayoutDashboard, Plus, Target } from "lucide-react";
+import { Anchor, ClipboardList, Database, FlaskConical, LayoutDashboard, Plus, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DEMO_TODAY, formatDate } from "@/lib/demo-date";
@@ -10,6 +10,7 @@ import { DEMO_TODAY, formatDate } from "@/lib/demo-date";
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/jobs", label: "Drafts", icon: ClipboardList },
+  { href: "/data", label: "Data", icon: Database },
   { href: "/eval", label: "Eval", icon: FlaskConical },
   { href: "/gtm", label: "Go-to-market", icon: Target },
 ];

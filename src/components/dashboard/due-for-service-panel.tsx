@@ -120,20 +120,26 @@ export function DueForServicePanel({ vessels }: { vessels: DueVessel[] }) {
                     {v.detail} · {v.owner}
                   </div>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => draft(v, selected)}>
+                <Button size="sm" variant="outline" className="shrink-0" onClick={() => draft(v, selected)}>
                   Draft outreach
                 </Button>
               </div>
               <div className="flex flex-wrap gap-1">
                 {v.operations.map((op) => (
-                  <Badge key={op.code} variant="outline" className="border-warning/50 bg-warning-soft text-warning-foreground font-normal">
-                    {op.description}: {op.monthsOverdue} mo overdue
-                    {op.lastWorkOrderNumber && op.lastDoneAt && (
-                      <span className="opacity-70">
-                        {" "}
-                        (last {op.lastWorkOrderNumber}, {formatDate(op.lastDoneAt)})
-                      </span>
-                    )}
+                  <Badge
+                    key={op.code}
+                    variant="outline"
+                    className="max-w-full justify-start rounded-md border-warning/50 bg-warning-soft text-warning-foreground font-normal whitespace-normal"
+                  >
+                    <span>
+                      {op.description}: {op.monthsOverdue} mo overdue
+                      {op.lastWorkOrderNumber && op.lastDoneAt && (
+                        <span className="opacity-70">
+                          {" "}
+                          (last {op.lastWorkOrderNumber}, {formatDate(op.lastDoneAt)})
+                        </span>
+                      )}
+                    </span>
                   </Badge>
                 ))}
               </div>

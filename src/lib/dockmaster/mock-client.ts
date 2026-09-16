@@ -64,6 +64,12 @@ type EstimateRow = Prisma.EstimateGetPayload<{ include: typeof estimateInclude }
 const invoiceInclude = { customer: true, workOrder: true } satisfies Prisma.InvoiceInclude;
 type InvoiceRow = Prisma.InvoiceGetPayload<{ include: typeof invoiceInclude }>;
 
+const kitInclude = {
+  items: { include: { part: true } },
+  operationCode: true,
+} satisfies Prisma.PartsKitInclude;
+type KitRow = Prisma.PartsKitGetPayload<{ include: typeof kitInclude }>;
+
 // ---------- mappers ----------
 
 function toCustomer(c: Prisma.CustomerGetPayload<object>): Customer {
@@ -133,6 +139,15 @@ function toPart(p: Prisma.PartGetPayload<object>): Part {
     reorderPoint: p.reorderPoint,
     binLocation: p.binLocation,
     fitsEngineMakes: parseJson<string[]>(p.fitsEngineMakes, []),
+  };
+}
+
+function toPartsKit(k: KitRow): PartsKit {
+  return {
+    id: k.id,
+    name: k.name,
+    operationCode: k.operationCode?.code ?? "",
+    items: k.items.map((i) => ({ part: toPart(i.part), qty: i.qty })),
   };
 }
 
@@ -378,11 +393,21 @@ export class PrismaDockMasterClient implements DockMasterClient {
     };
   }
 
+  async listPartsKits(): Promise<PartsKit[]> {
+    const rows = await this.db.partsKit.findMany({ include: kitInclude, orderBy: { name: "asc" } });
+    return rows.map(toPartsKit);
+  }
+
   async getPartStock(partNumbers: string[]): Promise<Part[]> {
     if (partNumbers.length === 0) return [];
     const rows = await this.db.part.findMany({
       where: { partNumber: { in: partNumbers } },
     });
+    return rows.map(toPart);
+  }
+
+  async listParts(): Promise<Part[]> {
+    const rows = await this.db.part.findMany({ orderBy: { partNumber: "asc" } });
     return rows.map(toPart);
   }
 
@@ -612,6 +637,11 @@ export class PrismaDockMasterClient implements DockMasterClient {
     });
   }
 
+  async listInvoices(): Promise<Invoice[]> {
+    const rows = await this.db.invoice.findMany({ include: invoiceInclude, orderBy: { issuedAt: "desc" } });
+    return rows.map(toInvoice);
+  }
+
   async getInvoice(id: string): Promise<Invoice | null> {
     const r = await this.db.invoice.findUnique({ where: { id }, include: invoiceInclude });
     return r ? toInvoice(r) : null;
@@ -736,6 +766,11 @@ export class PrismaDockMasterClient implements DockMasterClient {
   async getCustomer(id: string): Promise<Customer | null> {
     const c = await this.db.customer.findUnique({ where: { id } });
     return c ? toCustomer(c) : null;
+  }
+
+  async listCustomers(): Promise<Customer[]> {
+    const rows = await this.db.customer.findMany({ orderBy: { name: "asc" } });
+    return rows.map(toCustomer);
   }
 }
 
