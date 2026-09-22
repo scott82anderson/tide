@@ -17,8 +17,9 @@ const NAV = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // The owner portal and the public Try-It tool stand outside the back office.
-  const isPortal = pathname.startsWith("/portal") || pathname.startsWith("/try");
+  // The owner portal, the public Try-It tool and the /start presentation page stand outside the back office.
+  const isPortal =
+    pathname.startsWith("/portal") || pathname.startsWith("/try") || pathname.startsWith("/start");
 
   if (isPortal) {
     return <div className="min-h-screen bg-background">{children}</div>;
