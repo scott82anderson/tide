@@ -22,7 +22,9 @@ export const metadata: Metadata = {
   description: "Entry point for presenting the DockMaster Service Writer case: deck, one-pager and the working prototype.",
 };
 
-const DECK = "/docs/DockMaster_AI_Opportunity_Service_Writer.pptx";
+const DECK_SLIDES =
+  "https://docs.google.com/presentation/d/1j5U07veYTYCPFL7euIvnSIX2U-8WTcDSVn-uxk-mLpk/edit?usp=sharing";
+const DECK_PPTX = "/docs/DockMaster_AI_Opportunity_Service_Writer.pptx";
 const ONE_PAGER_PDF = "/docs/DockMaster_Service_Writer_GTM_OnePager.pdf";
 const ONE_PAGER_DOCX = "/docs/DockMaster_Service_Writer_GTM_OnePager.docx";
 
@@ -142,11 +144,16 @@ export default function StartPage() {
                   Service Writer, prototype, go-to-market, agents, packaging, roadmap, risks.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="mt-auto px-5">
+              <CardContent className="mt-auto flex flex-col gap-2 px-5">
                 <Button asChild className="w-full">
-                  <a href={DECK} download>
+                  <a href={DECK_SLIDES} target="_blank" rel="noopener">
+                    Open in Google Slides
+                    <ExternalLink className="size-4" />
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <a href={DECK_PPTX} download>
                     Download PowerPoint
-                    <ArrowRight className="size-4" />
                   </a>
                 </Button>
               </CardContent>
