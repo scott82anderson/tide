@@ -67,14 +67,6 @@ const PROTOTYPE_ROUTES = [
   },
 ];
 
-const DEMO_STEPS = [
-  "Open the deck. Slides 2 to 6 set the situation, the moat, the market and the opportunity map. Slide 7 lands on the Service Writer.",
-  "Switch to the prototype. Draft sample note 1 (the Sea Ray overheat), edit one line, approve, sign as the owner, watch it land on the scheduler.",
-  "Show the side panels: due-for-service outreach and an overdue AR reminder. Nothing leaves without a click.",
-  "Back to the deck for go-to-market, agents, packaging, roadmap and risks. Open the GTM console if the room wants to see the agents run.",
-  "Leave the one-pager behind. It carries the positioning, packaging and the 12-month roadmap on a single page.",
-];
-
 const EVAL_ROWS = [
   { metric: "Vessel match", result: "15 / 15", target: "14 / 15" },
   { metric: "Operation recall (mean)", result: "0.96", target: "0.85" },
@@ -209,63 +201,47 @@ export default function StartPage() {
           </div>
         </section>
 
-        <section className="grid gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight">Suggested order for the room</h2>
-            <ol className="space-y-3">
-              {DEMO_STEPS.map((step, i) => (
-                <li key={step} className="flex gap-3 text-sm">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-                    {i + 1}
-                  </span>
-                  <span className="pt-0.5 text-foreground/90">{step}</span>
-                </li>
-              ))}
-            </ol>
-            <p className="text-xs text-muted-foreground">
-              The demo date is fixed at Monday 14 September 2026, so every screen reads the same on any day.
-              Sample note 1 drafts without an API key from recorded model output. Everything else runs live.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight">What the prototype proves</h2>
-            <Card className="gap-3 py-4">
-              <CardHeader className="px-5">
-                <CardDescription>
-                  Golden set of 15 technician notes, run 12 September 2026 on Claude Sonnet 4.6.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-5">
-                <table className="w-full text-sm">
-                  <thead className="text-xs text-muted-foreground">
-                    <tr>
-                      <th className="pb-2 text-left font-medium">Metric</th>
-                      <th className="pb-2 text-right font-medium">Result</th>
-                      <th className="pb-2 text-right font-medium">Target</th>
+        <section className="max-w-2xl space-y-4">
+          <h2 className="text-xl font-semibold tracking-tight">What the prototype proves</h2>
+          <Card className="gap-3 py-4">
+            <CardHeader className="px-5">
+              <CardDescription>
+                Golden set of 15 technician notes, run 12 September 2026 on Claude Sonnet 4.6.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-5">
+              <table className="w-full text-sm">
+                <thead className="text-xs text-muted-foreground">
+                  <tr>
+                    <th className="pb-2 text-left font-medium">Metric</th>
+                    <th className="pb-2 text-right font-medium">Result</th>
+                    <th className="pb-2 text-right font-medium">Target</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {EVAL_ROWS.map((row) => (
+                    <tr key={row.metric} className="border-t">
+                      <td className="py-2">{row.metric}</td>
+                      <td className="py-2 text-right font-medium tabular-nums">{row.result}</td>
+                      <td className="py-2 text-right tabular-nums text-muted-foreground">{row.target}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {EVAL_ROWS.map((row) => (
-                      <tr key={row.metric} className="border-t">
-                        <td className="py-2">{row.metric}</td>
-                        <td className="py-2 text-right font-medium tabular-nums">{row.result}</td>
-                        <td className="py-2 text-right tabular-nums text-muted-foreground">{row.target}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  The model only selects from candidates the database returned. It never invents a vessel, a
-                  code, a part or a price.{" "}
-                  <Link href="/eval" className="text-primary underline-offset-2 hover:underline">
-                    Full results
-                  </Link>
-                  .
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+              <p className="mt-3 text-xs text-muted-foreground">
+                The model only selects from candidates the database returned. It never invents a vessel, a
+                code, a part or a price.{" "}
+                <Link href="/eval" className="text-primary underline-offset-2 hover:underline">
+                  Full results
+                </Link>
+                .
+              </p>
+            </CardContent>
+          </Card>
+          <p className="text-xs text-muted-foreground">
+            The demo date is fixed at Monday 14 September 2026, so every screen reads the same on any day.
+            Sample note 1 drafts without an API key from recorded model output. Everything else runs live.
+          </p>
         </section>
 
         <section className="space-y-4">
